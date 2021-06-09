@@ -17,11 +17,13 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
+        'usrimg',
         'name',
         'surname',
         'email',
         'password',
-        'role'
+        'role',
+        'last_login'
     ];
 
     /**
@@ -41,6 +43,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_login' => 'datetime',
     ];
 
     public function pages() {

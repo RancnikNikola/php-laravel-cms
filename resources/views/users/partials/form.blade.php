@@ -55,6 +55,14 @@
         @endif
 </div>
 
+<div class="mb-3">
+    <label for="usrimg">User Image</label>
+    <input type="file" name="usrimg" id="usrimg" class="py-4">
+    @error('usrimg')
+        <span class="invalid-feedback" role="alert">
+            {{ $message }}
+    @enderror
+</div>
 
 
 <button type="submit" class="btn btn-primary">Submit</button>

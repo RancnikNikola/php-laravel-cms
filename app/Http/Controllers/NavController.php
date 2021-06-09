@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use PDF;
 use App\Models\Nav;
 use App\Models\Page;
 use Illuminate\Http\Request;
 
 class NavController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     /**
      * Display a listing of the resource.
      *
@@ -50,7 +55,7 @@ class NavController extends Controller
         $nav = Nav::create($data);
         $nav->save();
 
-        return redirect()->route('navs.index');
+        return redirect()->route('navs.index')->with('status', "$nav->name Nav was created");
     }
 
     /**
@@ -93,7 +98,7 @@ class NavController extends Controller
 
         $nav->save();
 
-        return redirect()->route('navs.index');
+        return redirect()->route('navs.index')->with('status', "$nav->name Nav was updated");
     }
 
     /**
@@ -104,6 +109,39 @@ class NavController extends Controller
      */
     public function destroy(Nav $nav)
     {
-        //
+        Nav::destroy($nav->id);
+
+        return redirect()->route('navs.index')->with('status', "$nav->name Nav was deleted");
     }
+
+    public function search(Request $request){
+        // Get the search value from the request
+        $search = $request->input('search');
+        $show = $request->input('show');
+
+
+        // DODAT VALIDACIJUUUUU ODE 
+
+
+            $navs = Nav::take($show)
+            ->where('name', 'LIKE', "%{$search}%")
+            ->get();
+        
+        // Return the search view with the resluts compacted
+        // return view('search', compact('collection'));
+        return view('navs.search', compact('navs'));
+    }
+
+            // Generate PDF
+            public function createPDF() {
+                // retreive all records from db
+                $navs_pdf = Nav::all();
+          
+                // share data to view
+                view()->share('navs_pdf', $navs_pdf);
+                $pdf = PDF::loadView('pdf_view_nav', $navs_pdf);
+          
+                // download PDF file with download method
+                return $pdf->download('navs.pdf');
+              }
 }

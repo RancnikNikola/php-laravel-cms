@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
+use App\Models\User;
+use Carbon\Carbon;
+
 
 class LoginController extends Controller
 {
@@ -20,6 +24,13 @@ class LoginController extends Controller
     */
 
     use AuthenticatesUsers;
+
+    function authenticated(Request $request, User $user)
+{
+        $user->update([
+            'last_login' => Carbon::now('Europe/Zagreb'),
+        ]);
+}
 
     /**
      * Where to redirect users after login.

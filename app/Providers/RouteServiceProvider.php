@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 
+use App\Models\Page;
+
 class RouteServiceProvider extends ServiceProvider
 {
     /**

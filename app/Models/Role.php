@@ -9,6 +9,10 @@ class Role extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'permissions' => 'array',
+    ];
+
     protected $guarded = [];
 
     public function users() {
@@ -30,7 +34,9 @@ class Role extends Model
 
     // was protected
     public function hasPermission(string $permission) {
-        $permissions = json_decode($this->permissions, true);
+        $permissions = json_encode($this->permissions);
+        $permissions = json_decode($permissions, true);
+
         return $permissions[$permission] ?? false;
     }
 

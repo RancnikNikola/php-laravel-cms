@@ -23,7 +23,7 @@
     <div class="checkbox">
         
         <label>
-            <input type="checkbox" name="permissions[]" value="{{ $permission->id }}" {{ $role->hasPermission($permission->name ) ? 'checked' : ''}}>
+            <input type="checkbox" name="permissions[]" value="{{ $permission->id }}" {{ $role->hasPermission($permission->name) ? 'checked' : ''}}>
             {{ $permission->name }}
         </label>
        

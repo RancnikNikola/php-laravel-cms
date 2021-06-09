@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use PDF;
 use Auth;
 use App\Models\Page;
 use Illuminate\Http\Request;
+use Intervention\Image\Facades\Image;
 
 class PageController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     /**
      * Display a listing of the resource.
      *
@@ -15,7 +22,7 @@ class PageController extends Controller
      */
     public function index()
     {
-        $pages = Page::all();
+        $pages = Page::paginate(3);
      
 
         return view('pages.index', [
@@ -40,11 +47,55 @@ class PageController extends Controller
      */
     public function store(Request $request)
     {
-        Auth::user()->pages()->save(new Page($request->only([
-            'title', 'url', 'content'
-        ])));
+        $page = Auth::user()->pages()->save(new Page($this->validateRequest()));
 
-        return redirect()->route('pages.index');
+        $this->storeImage($page);
+
+        return redirect()->route('pages.index')->with('status', "$page->title Page was created");
+
+    }
+
+    private function validateRequest() {
+
+        return tap(request()->validate([
+            'title' => 'required',
+            'content' => 'required',
+        ]), function () {
+
+            if (request()->hasFile('image')) {
+                request()->validate([
+                    'image' => 'file|image|max:5000',
+                ]);
+            }
+        });
+        
+    }
+
+    private function validateUpdateRequest() {
+
+        return tap(request()->validate([
+            'title' => 'string',
+            'content' => 'string',
+        ]), function () {
+
+            if (request()->hasFile('image')) {
+                request()->validate([
+                    'image' => 'file|image|max:5000',
+                ]);
+            }
+        });
+        
+    }
+
+    private function storeImage($page) {
+
+        if (request()->has('image')) {
+            $page->update([
+                'image' => request()->image->store('uploads', 'public'),
+            ]);
+            $image = Image::make(public_path('storage/' . $page->image))->fit(400, 400);
+            $image->save();
+        }
     }
 
     /**
@@ -55,7 +106,7 @@ class PageController extends Controller
      */
     public function show(Page $page)
     {
-        return view('pages.show', ['page' => $page ]);
+        return view('pages.show', ['page' => $page]);
     }
 
     /**
@@ -78,13 +129,12 @@ class PageController extends Controller
      */
     public function update(Request $request, Page $page)
     {
-        $page->fill($request->only([
-            'title', 'url', 'content'
-        ]));
+        
+        $page->update($this->validateUpdateRequest());
 
-        $page->save();
+        $this->storeImage($page);
 
-        return redirect()->route('pages.index');
+        return redirect()->route('pages.index')->with('status', "$page->title Page was updated");
     }
 
     /**
@@ -95,6 +145,35 @@ class PageController extends Controller
      */
     public function destroy(Page $page)
     {
-        //
+        Page::destroy($page->id);
+
+        return redirect()->route('pages.index')->with('status', "$page->title Page was deleted");
     }
+
+    public function search(Request $request){
+        // Get the search value from the request
+        $search = $request->input('search');
+        $show = $request->input('show');
+
+        $pages = Page::take($show)
+            ->where('title', 'LIKE', "%{$search}%")
+            ->get();
+    
+        // Return the search view with the resluts compacted
+        // return view('search', compact('collection'));
+        return view('pages.search', compact('pages'));
+    }
+
+        // Generate PDF
+        public function createPDF() {
+            // retreive all records from db
+            $pages_pdf = Page::all();
+      
+            // share data to view
+            view()->share('pages_pdf', $pages_pdf);
+            $pdf = PDF::loadView('pdf_view_page', $pages_pdf);
+      
+            // download PDF file with download method
+            return $pdf->download('pages.pdf');
+          }
 }

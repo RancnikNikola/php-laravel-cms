@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Nav;
 use App\Models\Page;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // 
     }
 
     /**
@@ -25,9 +26,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $navs = Nav::all();
+        Paginator::useBootstrap();
+        
+        $navis = Nav::all();
        
-
-        view()->share('navs', $navs);
+        view()->share('navis', $navis);
     }
 }

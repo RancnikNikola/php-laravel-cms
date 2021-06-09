@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use PDF;
 use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     /**
      * Display a listing of the resource.
      *
@@ -16,7 +22,7 @@ class RoleController extends Controller
      */
     public function index()
     {
-        return view('roles.index', ['roles' => Role::all()]);
+        return view('roles.index', ['roles' => Role::paginate(2)]);
     }
 
     /**
@@ -43,6 +49,17 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'slug' => 'required',
+            'permissions' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('roles.create');
+        }
+
         $data = $request->permissions;
 
         $json_data = [];
@@ -54,16 +71,14 @@ class RoleController extends Controller
         }
 
         $dada = array_merge(...$json_data);
-
-        
         
         $role = Role::create([
             'name' => $request->name,
             'slug' => $request->slug,
-            'permissions' => json_encode($dada)
+            'permissions' => $dada
         ]);
 
-        return redirect()->route('roles.index');
+        return redirect()->route('roles.index')->with('status', "$role->name Role was created");
     }
 
     /**
@@ -121,7 +136,7 @@ class RoleController extends Controller
         ]);
 
 
-        return redirect()->route('roles.index');
+        return redirect()->route('roles.index')->with('status', "$role->name Role was updated");
     }
 
     /**
@@ -134,6 +149,34 @@ class RoleController extends Controller
     {
         Role::destroy($role->id);
 
-        return redirect()->route('roles.index');
+        return redirect()->route('roles.index')->with('status', "$role->name Role was deleted");;
     }
+
+    public function search(Request $request){
+        // Get the search value from the request
+        $search = $request->input('search');
+        $show = $request->input('show');
+
+        $roles = Role::take($show)
+            ->where('name', 'LIKE', "%{$search}%")
+            ->orWhere('slug', 'LIKE', "%{$search}%")
+            ->get();
+    
+        // Return the search view with the resluts compacted
+        // return view('search', compact('collection'));
+        return view('roles.search', compact('roles'));
+    }
+
+    // Generate PDF
+    public function createPDF() {
+        // retreive all records from db
+        $roles_pdf = Role::all();
+    
+        // share data to view
+        view()->share('roles_pdf', $roles_pdf);
+        $pdf = PDF::loadView('pdf_view_role', $roles_pdf);
+    
+        // download PDF file with download method
+        return $pdf->download('roles.pdf');
+        }
 }

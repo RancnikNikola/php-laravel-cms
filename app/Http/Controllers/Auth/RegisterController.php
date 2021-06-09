@@ -9,6 +9,7 @@ use App\Models\Role;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Intervention\Image\Facades\Image;
 
 class RegisterController extends Controller
 {
@@ -51,6 +52,7 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
+            'usrimg' => 'file|image|max:5000',
             'name' => ['required', 'string', 'max:255'],
             'surname' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -72,7 +74,10 @@ class RegisterController extends Controller
             'surname' => $data['surname'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'usrimg' => $data['usrimg'],
         ]);
+
+        $this->storeImage($user);
 
         $user->roles()->attach($data['role']);
 
@@ -83,4 +88,17 @@ class RegisterController extends Controller
         $roles = Role::orderBy('name')->pluck('name', 'id');
         return view('auth.register', compact('roles'));
     }
+
+    private function storeImage($user) {
+
+        if (request()->has('usrimg')) {
+            $user->update([
+                'usrimg' => request()->usrimg->store('uploads', 'public'),
+            ]);
+            $image = Image::make(public_path('storage/' . $user->usrimg))->fit(40, 40);
+            $image->save();
+        }
+    }
+
+
 }
