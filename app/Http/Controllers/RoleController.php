@@ -132,7 +132,7 @@ class RoleController extends Controller
         $role->update([
             'name' => $request->name,
             'slug' => $request->slug,
-            'permissions' => json_encode($dada)
+            'permissions' => $dada
         ]);
 
 
